@@ -1,4 +1,5 @@
-# Research Preparation Assignment  
+# Research Preparation Assignment
+
 ## Representation Learning, Clustering, Deep Generative Models, Federated Clustering, Federated Learning, and Privacy Protection
 
 ### 1. Purpose
@@ -9,8 +10,8 @@ The goal is to learn the basic concepts while writing code and running experimen
 
 This is not a reading-only assignment. For each topic, you should write code, run experiments, inspect the results, and explain what you observe.
 
-**Duration:** 5 weeks  
-**Expected workload:** 10–15 hours per week  
+**Duration:** 5 weeks
+**Expected workload:** 10–15 hours per week
 **Total workload:** approximately 50–75 hours
 
 At the end of the assignment, you should be able to:
@@ -1354,17 +1355,17 @@ Use the same visualization settings when comparing two representations whenever 
 
 Create a results table similar to:
 
-| Method | Partition | Latent Dim. | Privacy Setting | ARI | NMI | Silhouette | Communication Rounds |
-|---|---|---:|---|---:|---:|---:|---:|
-| Raw + K-means | Centralized | original | None | | | | 0 |
-| PCA + K-means | Centralized | 20 | None | | | | 0 |
-| AE + K-means | Centralized | 16 | None | | | | 0 |
-| VAE + K-means | Centralized | 16 | None | | | | 0 |
-| Local AE + K-means | Non-IID | 16 | None | | | | 0 |
-| Federated AE + K-means | IID | 16 | None | | | | |
-| Federated AE + K-means | Non-IID | 16 | None | | | | |
-| Federated VAE + K-means | Non-IID | 16 | None | | | | |
-| Federated model + clipping/noise | Non-IID | 16 | specified | | | | |
+| Method                           | Partition   | Latent Dim. | Privacy Setting | ARI | NMI | Silhouette | Communication Rounds |
+| -------------------------------- | ----------- | ----------: | --------------- | --: | --: | ---------: | -------------------: |
+| Raw + K-means                    | Centralized |    original | None            |     |     |            |                    0 |
+| PCA + K-means                    | Centralized |          20 | None            |     |     |            |                    0 |
+| AE + K-means                     | Centralized |          16 | None            |     |     |            |                    0 |
+| VAE + K-means                    | Centralized |          16 | None            |     |     |            |                    0 |
+| Local AE + K-means               | Non-IID     |          16 | None            |     |     |            |                    0 |
+| Federated AE + K-means           | IID         |          16 | None            |     |     |            |                      |
+| Federated AE + K-means           | Non-IID     |          16 | None            |     |     |            |                      |
+| Federated VAE + K-means          | Non-IID     |          16 | None            |     |     |            |                      |
+| Federated model + clipping/noise | Non-IID     |          16 | specified       |     |     |            |                      |
 
 Report mean and standard deviation over multiple seeds for the main methods if computational resources permit.
 
