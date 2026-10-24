@@ -11,6 +11,11 @@ from data import load_data
 from evaluation import evaluate_clustering, run_kmeans
 from models import Autoencoder, VAE, extract_features, train_model
 
+import matplotlib.pyplot as plt
+
+from partition import partition_data
+from visualization import plot_client_distributions
+
 
 def run_stage1():
     X_train, X_test, _, y_test = load_data(config.SPLIT_SEED)
@@ -62,14 +67,55 @@ def run_stage1():
     output_dir = Path(__file__).resolve().parent / "result"
     output_dir.mkdir(parents=True, exist_ok=True)
     means.to_csv(output_dir / "stage1.csv", float_format="%.4f")
-    table = means.map(lambda value: f"{value:.4f}")
-    print(table.to_string())
+    print(f"Stage 1: result: {output_dir / 'stage1.csv'}")
     return results
 
+def run_stage2():
+    X_train, _, y_train, _ = load_data(
+        split_seed=config.SPLIT_SEED
+    )
+
+    # 1. 生成 IID 划分
+    iid_indices = partition_data(
+        y_train,
+        num_clients=config.NUM_CLIENTS,
+        mode="iid",
+        seed=config.PARTITION_SEED,
+    )
+
+    # 2. 生成 non-IID 划分
+    noniid_indices = partition_data(
+        y_train,
+        num_clients=config.NUM_CLIENTS,
+        mode="noniid",
+        seed=config.PARTITION_SEED,
+    )
+
+    # 3. 绘制、保存分布图
+    save_path = (
+        Path(__file__).resolve().parent
+        / "result"
+        / "stage2_distribution.png"
+    )
+
+    fig = plot_client_distributions(
+        y_train,
+        iid_indices,
+        noniid_indices,
+        save_path=save_path,
+    )
+
+    print(f"Stage 2's result: {save_path}")
+
+    plt.show()
+    plt.close(fig)
+
+    return iid_indices, noniid_indices
 
 def main():
     torch.set_num_threads(1)
     run_stage1()
+    run_stage2()
 
 
 if __name__ == "__main__":
