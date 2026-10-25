@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 from partition import partition_data
 from visualization import plot_client_distributions
 
+from client import run_local_only
 
 def run_stage1():
     X_train, X_test, _, y_test = load_data(config.SPLIT_SEED)
@@ -67,7 +68,7 @@ def run_stage1():
     output_dir = Path(__file__).resolve().parent / "result"
     output_dir.mkdir(parents=True, exist_ok=True)
     means.to_csv(output_dir / "stage1.csv", float_format="%.4f")
-    print(f"Stage 1: result: {output_dir / 'stage1.csv'}")
+    print("Stage 1's result: week5/result/stage1.csv")
     return results
 
 def run_stage2():
@@ -105,17 +106,118 @@ def run_stage2():
         save_path=save_path,
     )
 
-    print(f"Stage 2's result: {save_path}")
+    print("Stage 2's result: week5/result/stage2_distribution.png")
 
     plt.show()
     plt.close(fig)
 
     return iid_indices, noniid_indices
 
+def run_stage3():
+    X_train, X_test, y_train, y_test = load_data(
+        split_seed=config.SPLIT_SEED
+    )
+
+    client_results = []
+    weighted_results = []
+
+    for mode in ["iid", "noniid"]:
+        train_indices = partition_data(
+            y_train,
+            num_clients=config.NUM_CLIENTS,
+            mode=mode,
+            seed=config.PARTITION_SEED,
+        )
+
+        test_indices = partition_data(
+            y_test,
+            num_clients=config.NUM_CLIENTS,
+            mode=mode,
+            seed=config.PARTITION_SEED,
+        )
+
+        for seed in config.SEEDS:
+            rows = run_local_only(
+                X_train=X_train,
+                X_test=X_test,
+                y_test=y_test,
+                train_indices=train_indices,
+                test_indices=test_indices,
+                seed=seed,
+            )
+
+            seed_df = pd.DataFrame(rows)
+
+            # 当前种子：按各客户端测试样本数计算加权平均
+            weighted_results.append({
+                "Partition": mode,
+                "Weighted_ARI": np.average(
+                    seed_df["ARI"],
+                    weights=seed_df["N_test"],
+                ),
+                "Weighted_NMI": np.average(
+                    seed_df["NMI"],
+                    weights=seed_df["N_test"],
+                ),
+            })
+
+            for row in rows:
+                client_results.append({
+                    "Partition": mode,
+                    "Client": row["Client"],
+                    "ARI": row["ARI"],
+                    "NMI": row["NMI"],
+                })
+
+    # 每个客户端的 ARI、NMI：对随机种子取平均
+    client_df = (
+        pd.DataFrame(client_results)
+        .groupby(
+            ["Partition", "Client"],
+            as_index=False,
+            sort=False,
+        )[["ARI", "NMI"]]
+        .mean()
+    )
+
+    # 每个种子先计算客户端加权平均，再对随机种子取平均
+    weighted_df = (
+        pd.DataFrame(weighted_results)
+        .groupby(
+            "Partition",
+            as_index=False,
+            sort=False,
+        )[["Weighted_ARI", "Weighted_NMI"]]
+        .mean()
+    )
+
+    output_dir = Path(__file__).resolve().parent / "result"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    client_df.to_csv(
+        output_dir / "stage3_clients.csv",
+        index=False,
+        float_format="%.4f",
+    )
+
+    weighted_df.to_csv(
+        output_dir / "stage3_weighted.csv",
+        index=False,
+        float_format="%.4f",
+    )
+
+    print(
+        "Stage 3's result: week5/result/stage3_clients.csv, "
+        "week5/result/stage3_weighted.csv"
+    )
+
+    return client_df, weighted_df
+
 def main():
     torch.set_num_threads(1)
     run_stage1()
     run_stage2()
+    run_stage3()
 
 
 if __name__ == "__main__":
