@@ -6,6 +6,9 @@ import torch
 from evaluation import evaluate_clustering, run_kmeans
 from models import Autoencoder, extract_features, train_model
 
+from copy import deepcopy
+
+import config
 
 def run_local_only(
     X_train,
@@ -62,3 +65,15 @@ def run_local_only(
         })
 
     return results
+
+def train_client(global_model, X_local_train, seed):
+    local_model = deepcopy(global_model)
+
+    train_model(
+        local_model,
+        X_local_train,
+        seed,
+        epochs=config.LOCAL_EPOCHS,
+    )
+
+    return local_model.state_dict(), len(X_local_train)

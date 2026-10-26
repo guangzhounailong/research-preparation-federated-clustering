@@ -112,3 +112,65 @@ def plot_client_distributions(
         )
 
     return fig
+
+def plot_federated_curves(history_df, save_path=None):
+    metrics = [
+        ("Reconstruction_loss", "Reconstruction loss"),
+        ("ARI", "ARI"),
+        ("NMI", "NMI"),
+    ]
+
+    fig, axes = plt.subplots(
+        1,
+        3,
+        figsize=(16, 4.5),
+        constrained_layout=True,
+    )
+
+    for ax, (column, title) in zip(axes, metrics):
+        for mode, label in [
+            ("iid", "IID"),
+            ("noniid", "Non-IID"),
+        ]:
+            # 取出当前数据划分下的所有实验记录
+            mode_df = history_df[
+                history_df["Partition"] == mode
+            ]
+
+            # 同一轮的多个种子：计算均值和标准差
+            stats = (
+                mode_df.groupby("Round")[column]
+                .agg(["mean", "std"])
+                .sort_index()
+            )
+
+            rounds = stats.index.to_numpy()
+            mean = stats["mean"].to_numpy()
+            std = stats["std"].to_numpy()
+
+            line, = ax.plot(rounds, mean, label=label)
+
+            ax.fill_between(
+                rounds,
+                mean - std,
+                mean + std,
+                color=line.get_color(),
+                alpha=0.15,
+            )
+
+        ax.set_title(title)
+        ax.set_xlabel("Communication round")
+        ax.set_ylabel(title)
+        ax.grid(alpha=0.3)
+        ax.legend()
+
+    if save_path is not None:
+        save_path = Path(save_path)
+        save_path.parent.mkdir(parents=True, exist_ok=True)
+        fig.savefig(
+            save_path,
+            dpi=200,
+            bbox_inches="tight",
+        )
+
+    return fig

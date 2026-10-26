@@ -1,0 +1,5 @@
+Partition,metric,Local-only,Federated,Fed - Local
+IID,ARI,0.5894,0.6237,+0.0343
+IID,NMI,0.7619,0.7810,+0.0191
+non-IID,ARI,0.2104,0.3455,+0.1351
+non-IID,NMI,0.4624,0.4364,-0.0260

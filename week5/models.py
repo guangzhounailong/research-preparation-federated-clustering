@@ -69,7 +69,10 @@ class VAE(nn.Module):
         return reconstructed, mu, logvar
 
 
-def train_model(model, X_train, seed):
+def train_model(model, X_train, seed, epochs=None):
+    if epochs is None:
+        epochs = config.EPOCHS
+    
     generator = torch.Generator().manual_seed(seed)
     loader = DataLoader(
         TensorDataset(torch.from_numpy(X_train)),
@@ -81,7 +84,7 @@ def train_model(model, X_train, seed):
         model.parameters(), lr=config.LEARNING_RATE
     )
 
-    for _ in range(config.EPOCHS):
+    for _ in range(epochs):
         model.train()
         for (x,) in loader:
             optimizer.zero_grad()

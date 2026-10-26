@@ -21,3 +21,7 @@ KMEANS_N_INIT = 10
 # Client partition
 NUM_CLIENTS = 5
 PARTITION_SEED = 47
+
+# Federated training
+COMMUNICATION_ROUNDS = 50
+LOCAL_EPOCHS = 1
