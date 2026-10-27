@@ -113,6 +113,33 @@ def plot_client_distributions(
 
     return fig
 
+
+def plot_generated_samples(samples_by_seed, seeds, title, save_path):
+    fig, axes = plt.subplots(
+        len(samples_by_seed),
+        len(samples_by_seed[0]),
+        figsize=(10, 1.3 * len(samples_by_seed)),
+        squeeze=False,
+        constrained_layout=True,
+    )
+
+    for row, (samples, seed) in enumerate(zip(samples_by_seed, seeds)):
+        for col, sample in enumerate(samples):
+            ax = axes[row, col]
+            ax.imshow(sample, cmap="gray", vmin=0, vmax=1,
+                      interpolation="nearest")
+            ax.set_xticks([])
+            ax.set_yticks([])
+            for spine in ax.spines.values():
+                spine.set_visible(False)
+        axes[row, 0].set_ylabel(f"Seed {seed}")
+
+    fig.suptitle(title)
+    save_path = Path(save_path)
+    save_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(save_path, dpi=200, bbox_inches="tight")
+    return fig
+
 def plot_federated_curves(history_df, save_path=None):
     metrics = [
         ("Reconstruction_loss", "Reconstruction loss"),

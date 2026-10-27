@@ -6,7 +6,7 @@ import torch
 import config
 from client import train_client
 from evaluation import evaluate_clustering, run_kmeans
-from models import Autoencoder, extract_features
+from models import Autoencoder, VAE, extract_features
 from server import fedavg
 
 def run_federated_training(
@@ -15,11 +15,12 @@ def run_federated_training(
     y_test,
     train_indices,
     seed,
+    model_class = Autoencoder
 ):
     #初始化全局模型
     np.random.seed(seed)
     torch.manual_seed(seed)
-    global_model = Autoencoder()
+    global_model = model_class()
 
     history = []
     training_time = 0.0
@@ -65,21 +66,26 @@ def run_federated_training(
 
         #计算全局模型在测试集上的重建误差
         global_model.eval()
-        with torch.no_grad():
+        with torch.no_grad(), torch.random.fork_rng(devices=[]):
+            torch.manual_seed(seed + round_id)
             x_test = torch.from_numpy(X_test)
-            reconstructed = global_model(x_test)
+
+            if isinstance(global_model, VAE):
+                reconstructed, mu, logvar = global_model(x_test)
+                kl_loss = -0.5 * (1 + logvar - mu.square() - logvar.exp()).sum(dim=1).mean()
+            else:
+                reconstructed = global_model(x_test)
+                kl_loss = x_test.new_tensor(0.0)
 
             reconstruction_loss = (
-                (reconstructed - x_test)
-                .square()
-                .sum(dim=1)
-                .mean()
-                .item()
+                (reconstructed - x_test).square().sum(dim=1).mean().item()
             )
+        
         history.append({
             "Seed": seed,
             "Round": round_id,
             "Reconstruction_loss": reconstruction_loss,
+            "KL_loss": kl_loss.item(),
             **metrics,
         })
 

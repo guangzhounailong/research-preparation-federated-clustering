@@ -17,6 +17,7 @@ from partition import partition_data
 from visualization import (
     plot_client_distributions,
     plot_federated_curves,
+    plot_generated_samples,
 )
 
 from client import run_local_only
@@ -285,7 +286,7 @@ def run_stage4():
     summary_df = (
         final_df
         .groupby("Partition", sort=False)[metric_columns]
-        .agg(["mean", "std"])
+        .agg(["mean"])
     )
 
     summary_df.columns = [
@@ -373,9 +374,105 @@ def run_stage4():
 
     return history_df, summary_df
 
+def run_stage5():
+    X_train, X_test, y_train, y_test = load_data(
+        split_seed=config.SPLIT_SEED
+    )
+
+    final_results = []
+    output_dir = Path(__file__).resolve().parent / "result"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    for mode in ["iid", "noniid"]:
+        generated_samples = []
+        # 同一种划分下，AE 和 VAE 使用相同的客户端数据
+        train_indices = partition_data(
+            y_train,
+            num_clients=config.NUM_CLIENTS,
+            mode=mode,
+            seed=config.PARTITION_SEED,
+        )
+
+        for model_name, model_class in [
+            ("AE", Autoencoder),
+            ("VAE", VAE),
+        ]:
+            for seed in config.SEEDS:
+                global_model, history = run_federated_training(
+                    X_train=X_train,
+                    X_test=X_test,
+                    y_test=y_test,
+                    train_indices=train_indices,
+                    seed=seed,
+                    model_class=model_class,
+                )
+
+                # 保存当前实验最后一轮的结果
+                final_results.append({
+                    "Partition": mode,
+                    "Model": model_name,
+                    **history[-1],
+                })
+
+                if model_name == "VAE":
+                    # 固定同一组先验样本，且不改变训练使用的随机状态
+                    generator = torch.Generator().manual_seed(config.SEEDS[0])
+                    global_model.eval()
+                    with torch.no_grad():
+                        z = torch.randn(
+                            10, config.LATENT_DIM, generator=generator
+                        )
+                        samples = global_model.decoder(z)
+                    generated_samples.append(samples.numpy().reshape(-1, 8, 8))
+
+        save_path = output_dir / f"stage5_vae_generated_{mode}.png"
+        fig = plot_generated_samples(
+            generated_samples,
+            config.SEEDS,
+            title=f"Federated VAE prior samples - {mode}",
+            save_path=save_path,
+        )
+        plt.close(fig)
+        print(f"Stage 5's generated samples: week5/result/{save_path.name}")
+
+    final_df = pd.DataFrame(final_results)
+
+    metric_columns = [
+        "Reconstruction_loss",
+        "KL_loss",
+        "ARI",
+        "NMI",
+        "Silhouette",
+        "Training_time_seconds",
+    ]
+
+    # 对同一种划分、同一种模型的不同种子结果做统计
+    comparison_df = (
+        final_df
+        .groupby(["Partition", "Model"], sort=False)[metric_columns]
+        .agg(["mean"])
+    )
+
+    # 将两层列名展开，例如 ARI + mean → ARI_mean
+    comparison_df.columns = [
+        f"{metric}_{stat}"
+        for metric, stat in comparison_df.columns
+    ]
+    comparison_df = comparison_df.reset_index()
+
+    comparison_df.to_csv(
+        output_dir / "stage5_comparison.csv",
+        index=False,
+        float_format="%.4f",
+    )
+
+    print("Stage 5's result: week5/result/stage5_comparison.csv")
+
+    return comparison_df
+
 def main():
     torch.set_num_threads(1)
-    run_stage4()
+    run_stage5()
 
 
 if __name__ == "__main__":
