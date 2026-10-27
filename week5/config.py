@@ -25,3 +25,7 @@ PARTITION_SEED = 47
 # Federated training
 COMMUNICATION_ROUNDS = 50
 LOCAL_EPOCHS = 1
+
+# Privacy mechanism simulation
+CLIP_NORM = 0.5
+NOISE_MULTIPLIERS = [0.00, 0.01, 0.05, 0.10]

@@ -7,7 +7,8 @@ import config
 from client import train_client
 from evaluation import evaluate_clustering, run_kmeans
 from models import Autoencoder, VAE, extract_features
-from server import fedavg
+from server import fedavg,fedavg_with_noise
+
 
 def run_federated_training(
     X_train,
@@ -15,7 +16,9 @@ def run_federated_training(
     y_test,
     train_indices,
     seed,
-    model_class = Autoencoder
+    model_class = Autoencoder,
+    clip_norm = None,
+    noise_multiplier=0.0
 ):
     #初始化全局模型
     np.random.seed(seed)
@@ -24,6 +27,7 @@ def run_federated_training(
 
     history = []
     training_time = 0.0
+    noise_generator = torch.Generator().manual_seed(seed + 1000)
 
     for round_id in range(1, config.COMMUNICATION_ROUNDS + 1):
         client_states = []
@@ -46,7 +50,23 @@ def run_federated_training(
             client_sizes.append(size)
 
         #更新全局模型
-        global_state = fedavg(client_states, client_sizes)
+        norm_metrics = {}
+
+        if clip_norm is None:
+            global_state = fedavg(client_states, client_sizes)
+        else:
+            global_state, norm_records = fedavg_with_noise(
+                client_states=client_states,
+                client_sizes=client_sizes,
+                global_state=global_model.state_dict(),
+                clip_norm=clip_norm,
+                noise_multiplier=noise_multiplier,
+                noise_generator=noise_generator,
+            )
+            norm_metrics = {
+                "Norm_before_mean": np.mean([row["Norm_before"] for row in norm_records]),
+                "Norm_after_mean": np.mean([row["Norm_after"] for row in norm_records]),
+                }
         global_model.load_state_dict(global_state)
         training_time += perf_counter() - start
 
@@ -86,6 +106,7 @@ def run_federated_training(
             "Round": round_id,
             "Reconstruction_loss": reconstruction_loss,
             "KL_loss": kl_loss.item(),
+            **norm_metrics,
             **metrics,
         })
 
