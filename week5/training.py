@@ -1,4 +1,4 @@
-"""集中式与客户端共用的单模型训练和表示提取。"""
+"""Train models and extract features for centralized and client workflows."""
 
 import torch
 from torch.utils.data import DataLoader, TensorDataset
@@ -50,7 +50,7 @@ def extract_features(model, X):
     model.eval()
     with torch.no_grad():
         features = model.encode(torch.from_numpy(X))
-        # 仅对 AE 的聚类表示按样本做 L2 归一化，不改变重建训练。
+        # Apply per-sample L2 normalization to AE clustering features only; leave reconstruction training unchanged.
         if isinstance(model, Autoencoder):
             features = torch.nn.functional.normalize(features, p=2, dim=1)
     return features.numpy()

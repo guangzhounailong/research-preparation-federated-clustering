@@ -1,4 +1,4 @@
-"""运行配置、环境和完成记录；只复用同配置、同代码且内容完整的结果。"""
+"""Track run metadata and validate reusable results."""
 
 from dataclasses import asdict
 from datetime import datetime, timezone

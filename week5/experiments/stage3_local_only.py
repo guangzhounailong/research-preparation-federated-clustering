@@ -1,4 +1,4 @@
-"""Stage 3: local only."""
+"""Stage 3: evaluate independent local-only AE clustering."""
 
 import numpy as np
 import pandas as pd
@@ -45,7 +45,7 @@ def run_stage3(config, output_dir):
 
             seed_df = pd.DataFrame(rows)
 
-            # 当前种子：按各客户端测试样本数计算加权平均
+            # For this seed, weight client metrics by their test sample counts.
             weighted_results.append({
                 "Partition": mode,
                 "Seed": seed,
@@ -77,7 +77,7 @@ def run_stage3(config, output_dir):
         float_format="%.4f",
     )
 
-    # 每个客户端的 ARI、NMI：对随机种子取平均
+    # Average per-client ARI and NMI across seeds.
     client_df = (
         pd.DataFrame(client_results)
         .groupby(
@@ -88,7 +88,7 @@ def run_stage3(config, output_dir):
         .mean()
     )
 
-    # 每个种子先计算客户端加权平均，再对随机种子取平均
+    # Compute client-weighted metrics per seed, then average across seeds.
     weighted_df = (
         pd.DataFrame(weighted_results)
         .groupby(

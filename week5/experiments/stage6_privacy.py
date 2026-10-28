@@ -1,4 +1,4 @@
-"""Stage 6: privacy."""
+"""Stage 6: evaluate federated AE with update clipping and Gaussian noise."""
 
 import pandas as pd
 
@@ -18,7 +18,7 @@ def run_stage6(config, output_dir):
     final_results = []
 
     for mode in ["iid", "noniid"]:
-        # 同一种划分下，所有噪声设置使用相同的客户端数据
+        # Use the same client data for all noise settings within each partition.
         train_indices = partition_data(
             y_train,
             num_clients=config.num_clients,
@@ -41,7 +41,7 @@ def run_stage6(config, output_dir):
                     config=config,
                 )
 
-                # 标记当前实验的设置
+                # Record the current experiment settings.
                 setting = {
                     "Partition": mode,
                     "Model": "AE",
@@ -50,14 +50,14 @@ def run_stage6(config, output_dir):
                     "Local_epochs": config.local_epochs,
                 }
 
-                # 保存每一轮的结果
+                # Save the results from every round.
                 for row in history:
                     history_results.append({
                         **setting,
                         **row,
                     })
 
-                # 最后一轮用于比较不同噪声设置
+                # Use the final round to compare noise settings.
                 final_results.append({
                     **setting,
                     **history[-1],
@@ -77,7 +77,7 @@ def run_stage6(config, output_dir):
         "Training_time_seconds",
     ]
 
-    # 每种划分、每档噪声：汇总不同种子的最终结果
+    # Aggregate final results across seeds for each partition and noise level.
     comparison_df = (
         final_df
         .groupby(

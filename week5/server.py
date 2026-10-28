@@ -1,4 +1,4 @@
-"""按客户端数据量聚合模型参数或处理后的更新。"""
+"""Aggregate client model parameters or updates by sample count."""
 
 import torch
 
@@ -6,7 +6,7 @@ from .privacy import clip_client_update, sample_gaussian_noise
 
 
 def fedavg(client_states, client_sizes):
-    #计算样本总数
+    # Compute the total sample count.
     total_samples = sum(client_sizes)
 
     global_state = {name: torch.zeros_like(param) for name, param in client_states[0].items()}
@@ -32,7 +32,7 @@ def fedavg_with_noise(
     clipped_updates = []
     norm_records = []
 
-    # 1. 每个客户端分别计算、裁剪更新
+    # 1. Compute and clip each client update separately.
     for state in client_states:
         update, norm_before, norm_after = clip_client_update(
             state,
@@ -46,14 +46,14 @@ def fedavg_with_noise(
             "Norm_after": norm_after,
         })
 
-    # 2. 按客户端样本数，对裁剪后的更新加权平均
+    # 2. Average clipped updates, weighted by client sample counts.
     averaged_update = fedavg(clipped_updates, client_sizes)
 
-    # 3. 噪声标准差 = 噪声倍数 × 裁剪上限
+    # 3. Noise standard deviation = noise multiplier * clipping threshold.
     if noise_std is None:
         noise_std = noise_multiplier * clip_norm
 
-    # 4. 旧参数 + 平均更新 + 噪声
+    # 4. Previous parameters + average update + noise.
     new_state = {}
 
     for name, update in averaged_update.items():

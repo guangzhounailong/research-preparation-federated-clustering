@@ -1,4 +1,4 @@
-"""AE / VAE 网络定义；VAE 使用后验均值作为聚类表示。"""
+"""Define AE/VAE networks and use VAE posterior means for clustering."""
 
 import torch
 from torch import nn

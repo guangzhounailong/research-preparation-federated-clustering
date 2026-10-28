@@ -1,4 +1,4 @@
-"""集中保存实验默认值；每次运行使用独立、不可变的配置。"""
+"""Define immutable default settings for all experiments."""
 
 from dataclasses import dataclass
 

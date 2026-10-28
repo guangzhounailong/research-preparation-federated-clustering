@@ -1,4 +1,4 @@
-"""保存作图所需表示，避免可视化阶段重新训练。"""
+"""Save and load learned features for visualization."""
 
 import numpy as np
 

@@ -1,4 +1,4 @@
-"""Stage 5: federated vae."""
+"""Stage 5: compare federated AE/VAE and visualize VAE prior samples."""
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -22,7 +22,7 @@ def run_stage5(config, output_dir):
 
     for mode in ["iid", "noniid"]:
         generated_samples = []
-        # 同一种划分下，AE 和 VAE 使用相同的客户端数据
+        # Use the same client data for AE and VAE within each partition.
         train_indices = partition_data(
             y_train,
             num_clients=config.num_clients,
@@ -36,7 +36,7 @@ def run_stage5(config, output_dir):
         ]:
             for seed in config.seeds:
                 if model_name == "AE":
-                    # 与 Stage 4 完全相同的训练，直接复用逐种子最终结果。
+                    # Reuse the final per-seed results from the identical Stage 4 training.
                     row = previous[
                         (previous["Partition"] == mode) & (previous["Seed"] == seed)
                     ]
@@ -55,7 +55,7 @@ def run_stage5(config, output_dir):
                         config=config,
                     )
 
-                # 保存当前实验最后一轮的结果
+                # Save the final-round results for the current experiment.
                 final_results.append({
                     "Partition": mode,
                     "Model": model_name,
@@ -63,7 +63,7 @@ def run_stage5(config, output_dir):
                 })
 
                 if model_name == "VAE":
-                    # 固定同一组先验样本，且不改变训练使用的随机状态
+                    # Fix the prior samples without changing the random state used for training.
                     generator = torch.Generator().manual_seed(config.seeds[0])
                     global_model.eval()
                     with torch.no_grad():
@@ -95,14 +95,14 @@ def run_stage5(config, output_dir):
         "Training_time_seconds",
     ]
 
-    # 对同一种划分、同一种模型的不同种子结果做统计
+    # Aggregate results across seeds for each partition and model.
     comparison_df = (
         final_df
         .groupby(["Partition", "Model"], sort=False)[metric_columns]
         .agg(["mean"])
     )
 
-    # 将两层列名展开，例如 ARI + mean → ARI_mean
+    # Flatten two-level column names, for example ARI + mean -> ARI_mean.
     comparison_df.columns = [
         f"{metric}_{stat}"
         for metric, stat in comparison_df.columns

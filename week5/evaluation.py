@@ -1,4 +1,4 @@
-"""全局聚类指标与按客户端测试样本数加权的指标。"""
+"""Compute global and client-weighted clustering metrics."""
 
 import numpy as np
 from sklearn.metrics import (

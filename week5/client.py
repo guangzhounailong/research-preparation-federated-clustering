@@ -1,3 +1,5 @@
+"""Train local-only models and client updates for federated learning."""
+
 from copy import deepcopy
 from time import perf_counter
 
@@ -26,26 +28,26 @@ def run_local_only(
     for client_id, (train_idx, test_idx) in enumerate(
         zip(train_indices, test_indices)
     ):
-        # 当前客户端的数据
+        # Select data for the current client.
         X_local_train = X_train[train_idx]
         X_local_test = X_test[test_idx]
         y_local_test = y_test[test_idx]
 
-        # 每个客户端创建独立模型，使用相同初始化控制实验条件
+        # Create an independent model per client with the same initialization for a controlled comparison.
         np.random.seed(seed)
         torch.manual_seed(seed)
         model = Autoencoder(config=config)
 
-        # 只在本地训练数据上训练 AE
+        # Train the AE using only local training data.
         start = perf_counter()
         train_model(model, X_local_train, seed, config=config)
         ae_training_time = perf_counter() - start
 
-        # 使用当前客户端的编码器提取特征
+        # Extract features with the current client encoder.
         Z_train = extract_features(model, X_local_train)
         Z_test = extract_features(model, X_local_test)
 
-        # 在本地训练特征上拟合，在本地测试特征上预测
+        # Fit on local training features and predict clusters for local test features.
         y_pred, kmeans_training_time = run_kmeans(
             Z_train,
             Z_test,

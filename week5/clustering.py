@@ -1,4 +1,4 @@
-"""只在训练表示上拟合 K-means，在测试表示上预测。"""
+"""Fit K-means on training features and predict test clusters."""
 
 from time import perf_counter
 

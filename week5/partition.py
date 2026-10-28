@@ -1,3 +1,5 @@
+"""Split data into IID or non-IID client partitions."""
+
 import numpy as np
 
 def partition_data(y, num_clients, mode, seed):
@@ -21,11 +23,11 @@ def partition_data(y, num_clients, mode, seed):
         client_indices = []
 
         for client_classes in class_groups:
-            # 找出属于该客户端两种类别的全部样本
+            # Select all samples from the two classes assigned to this client.
             mask = np.isin(y, client_classes)
             indices = np.flatnonzero(mask)
 
-            # 打乱客户端内部的样本顺序
+            # Shuffle the sample order within this client.
             indices = rng.permutation(indices)
 
             client_indices.append(indices)

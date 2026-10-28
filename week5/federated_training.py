@@ -1,3 +1,5 @@
+"""Run federated training rounds and evaluate the global model."""
+
 from time import perf_counter
 
 import numpy as np
@@ -25,7 +27,7 @@ def run_federated_training(
     *,
     config=DEFAULT_CONFIG,
 ):
-    #初始化全局模型
+    # Initialize the global model.
     np.random.seed(seed)
     torch.manual_seed(seed)
     global_model = model_class(config=config)
@@ -55,7 +57,7 @@ def run_federated_training(
             client_states.append(state)
             client_sizes.append(size)
 
-        #更新全局模型
+        # Update the global model.
         norm_metrics = {}
 
         if clip_norm is None and noise_std is None:
@@ -77,11 +79,11 @@ def run_federated_training(
         global_model.load_state_dict(global_state)
         training_time += perf_counter() - start
 
-        #使用更新后的全局编码器提取特征
+        # Extract features with the updated global encoder.
         Z_train = extract_features(global_model, X_train)
         Z_test = extract_features(global_model, X_test)
 
-        #训练集拟合 K-means，测试集预测与评价
+        # Fit K-means on training features, then predict and evaluate on test features.
         y_pred, _ = run_kmeans(Z_train, Z_test, seed, config=config)
 
         metrics = evaluate_clustering(
@@ -91,7 +93,7 @@ def run_federated_training(
             training_time=training_time,
         )
 
-        #计算全局模型在测试集上的重建误差
+        # Compute test reconstruction error for the global model.
         global_model.eval()
         with torch.no_grad(), torch.random.fork_rng(devices=[]):
             torch.manual_seed(seed + round_id)

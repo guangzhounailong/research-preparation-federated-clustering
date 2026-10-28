@@ -1,4 +1,4 @@
-"""Stage 7: ablation."""
+"""Stage 7: compare clipping and noise ablation settings."""
 
 import pandas as pd
 
@@ -24,7 +24,7 @@ def run_stage7(config, output_dir):
     )
 
     ablation_clip_norm = config.ablation_clip_norm
-    # 固定实际噪声标准差，单独观察裁剪阈值变化的影响
+    # Fix the actual noise standard deviation to isolate the effect of clipping changes.
     noise_std = config.ablation_noise_std
 
     settings = [
@@ -89,7 +89,7 @@ def run_stage7(config, output_dir):
         "Training_time_seconds",
     ]
 
-    # 每组实验：汇总不同种子的最后一轮结果
+    # Aggregate final-round results across seeds for each experiment setting.
     comparison_df = (
         final_df
         .groupby(

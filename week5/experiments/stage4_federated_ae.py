@@ -1,4 +1,4 @@
-"""Stage 4: federated ae."""
+"""Stage 4: evaluate federated AE under IID and non-IID partitions."""
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -123,12 +123,12 @@ def run_stage4(config, output_dir):
     plt.close(fig)
     print(f"Stage 4's curves: {output_dir}/stage4_curves.png")
 
-    # 读取相同配置下的 Stage 3 结果
+    # Load Stage 3 results generated with the same configuration.
     local_df = pd.read_csv(
         output_dir.parent / "stage3" / "stage3_weighted.csv"
     )
 
-    # 提取 Stage 4 的客户端加权均值
+    # Extract the client-weighted means from Stage 4.
     federated_df = summary_df[[
         "Partition",
         "Weighted_ARI_mean",
@@ -138,7 +138,7 @@ def run_stage4(config, output_dir):
         "Weighted_NMI_mean": "Weighted_NMI",
     })
 
-    # 按数据划分对应合并
+    # Merge results by matching partition.
     comparison_df = local_df.merge(
         federated_df,
         on="Partition",
@@ -146,7 +146,7 @@ def run_stage4(config, output_dir):
         validate="one_to_one",
     )
 
-    # 每种数据划分分别列出 ARI、NMI，差值保留正负号
+    # List ARI and NMI for each partition, keeping the sign of each difference.
     comparison_rows = []
     for _, row in comparison_df.iterrows():
         for metric in ["ARI", "NMI"]:

@@ -1,4 +1,4 @@
-"""Stage 2: partition."""
+"""Stage 2: visualize IID and non-IID client class distributions."""
 
 import matplotlib.pyplot as plt
 
@@ -13,7 +13,7 @@ def run_stage2(config, output_dir):
         config=config,
     )
 
-    # 1. 生成 IID 划分
+    # 1. Create the IID partition.
     iid_indices = partition_data(
         y_train,
         num_clients=config.num_clients,
@@ -21,7 +21,7 @@ def run_stage2(config, output_dir):
         seed=config.partition_seed,
     )
 
-    # 2. 生成 non-IID 划分
+    # 2. Create the non-IID partition.
     noniid_indices = partition_data(
         y_train,
         num_clients=config.num_clients,
@@ -29,7 +29,7 @@ def run_stage2(config, output_dir):
         seed=config.partition_seed,
     )
 
-    # 3. 绘制、保存分布图
+    # 3. Plot and save the client class distributions.
     save_path = output_dir / "stage2_distribution.png"
 
     fig = plot_client_distributions(

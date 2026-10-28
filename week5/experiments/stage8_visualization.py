@@ -1,4 +1,4 @@
-"""Stage 8: 使用同次运行保存的表示作图，不重新训练模型。"""
+"""Stage 8: visualize saved representations using two-dimensional PCA."""
 
 import matplotlib.pyplot as plt
 

@@ -1,4 +1,4 @@
-"""统一实验入口：python -m week5.main --stage all。"""
+"""Run selected experiment stages and their dependencies."""
 
 import argparse
 from dataclasses import replace
@@ -20,7 +20,7 @@ STAGES = {
     8: "visualization",
     9: "comparison",
 }
-# 这些依赖只用于复用结果，不改变各阶段的训练设置。
+# Dependencies only enable result reuse; they do not change stage training settings.
 DEPENDENCIES = {4: (3,), 5: (4,), 8: (1, 4, 7), 9: (1, 3, 4, 5, 7)}
 
 
@@ -109,7 +109,7 @@ def parse_args(argv=None):
 
 def main(argv=None):
     config, output_dir, order = parse_args(argv)
-    # 命令行运行保存图片，不打开窗口；保持原入口的单线程训练设置。
+    # Save plots without opening windows and preserve single-threaded training.
     import matplotlib
     import torch
 

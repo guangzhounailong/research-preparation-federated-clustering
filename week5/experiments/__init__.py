@@ -1,1 +1,1 @@
-"""按作业 Stage 1–9 组织实验。"""
+"""Organize experiments into Stages 1-9."""

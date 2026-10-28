@@ -1,4 +1,4 @@
-"""Stage 1: centralized."""
+"""Stage 1: compare centralized Raw, PCA, AE, and VAE clustering."""
 
 from time import perf_counter
 

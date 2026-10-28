@@ -1,3 +1,5 @@
+"""Plot client distributions, training curves, samples, and representations."""
+
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -7,7 +9,7 @@ from sklearn.decomposition import PCA
 
 
 def plot_representations(representations, y_test, seed, save_path=None):
-    """分别拟合二维 PCA；测试标签仅用于着色，不参与降维。"""
+    """Fit two-dimensional PCA separately; test labels are used only for coloring."""
     classes, color_ids = np.unique(y_test, return_inverse=True)
     cmap = plt.get_cmap("tab10", len(classes))
     norm = BoundaryNorm(np.arange(len(classes) + 1) - 0.5, cmap.N)
@@ -16,7 +18,7 @@ def plot_representations(representations, y_test, seed, save_path=None):
     )
 
     for ax, (title, (Z_train, Z_test)) in zip(axes.flat, representations.items()):
-        # 每组使用相同的 PCA 设置，仅在训练特征上拟合。
+        # Use the same PCA settings for each representation and fit only on training features.
         pca = PCA(n_components=2, svd_solver="full")
         pca.fit(Z_train)
         coordinates = pca.transform(Z_test)
@@ -89,7 +91,7 @@ def plot_client_distributions(
         y, noniid_indices, classes
     )
 
-    # 两张图共用相同的颜色尺度
+    # Use the same color scale for both plots.
     vmax = max(iid_counts.max(), noniid_counts.max())
 
     fig, axes = plt.subplots(
@@ -120,7 +122,7 @@ def plot_client_distributions(
         ax.set_xticks(np.arange(len(classes)))
         ax.set_xticklabels(classes)
 
-        # 客户端名称后面附上该客户端的总样本数
+        # Include each client's total sample count in its label.
         client_totals = counts.sum(axis=1)
 
         ax.set_yticks(np.arange(len(counts)))
@@ -129,7 +131,7 @@ def plot_client_distributions(
             for i, total in enumerate(client_totals)
         ])
 
-        # 在每个格子里标注样本数
+        # Annotate each cell with its sample count.
         for row in range(counts.shape[0]):
             for col in range(counts.shape[1]):
                 value = counts[row, col]
@@ -209,12 +211,12 @@ def plot_federated_curves(history_df, save_path=None):
             ("iid", "IID"),
             ("noniid", "Non-IID"),
         ]:
-            # 取出当前数据划分下的所有实验记录
+            # Select all experiment records for the current partition.
             mode_df = history_df[
                 history_df["Partition"] == mode
             ]
 
-            # 同一轮的多个种子：计算均值和标准差
+            # Compute the mean and standard deviation across seeds at each round.
             stats = (
                 mode_df.groupby("Round")[column]
                 .agg(["mean", "std"])

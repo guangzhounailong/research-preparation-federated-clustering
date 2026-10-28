@@ -1,16 +1,16 @@
-"""更新裁剪和高斯噪声机制模拟，不提供正式 DP 会计。"""
+"""Simulate update clipping and Gaussian noise without formal DP accounting."""
 
 import torch
 
 
 def clip_client_update(local_state, global_state, clip_norm):
-    # 计算本轮本地训练带来的参数变化
+    # Compute parameter changes from this round of local training.
     update = {
         name: local_state[name] - global_state[name]
         for name in global_state
     }
 
-    # 把所有层的更新合起来，计算一个总长度
+    # Compute the joint L2 norm of updates across all layers.
     norm_before = torch.sqrt(sum(
         value.square().sum()
         for value in update.values()
@@ -35,7 +35,7 @@ def clip_client_update(local_state, global_state, clip_norm):
 
 
 def sample_gaussian_noise(update, noise_std, noise_generator):
-    """保留原有逐层采样顺序，包括标准差为零时的采样。"""
+    """Preserve layer-wise sampling order, including draws with zero standard deviation."""
     noise = torch.randn(
         update.shape,
         generator=noise_generator,

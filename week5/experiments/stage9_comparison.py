@@ -1,4 +1,4 @@
-"""Stage 9: 汇总逐种子结果，同时保留全局与客户端加权的评价口径。"""
+"""Stage 9: summarize results with global and client-weighted evaluation."""
 
 import pandas as pd
 
@@ -8,7 +8,7 @@ def run_stage9(config, output_dir):
     results = []
     run_dir = output_dir.parent
     centralized = pd.read_csv(run_dir / "stage1" / "stage1_results.csv")
-    # 与原 Stage 9 一样，先按种子，再按方法排列。
+    # Preserve the original Stage 9 ordering: seed first, then method.
     for seed in config.seeds:
         for _, row in centralized[centralized["Seed"] == seed].iterrows():
             method = row["Model"]
