@@ -1,0 +1,3 @@
+Partition,Weighted_ARI,Weighted_NMI
+iid,0.6281,0.7863
+noniid,0.2172,0.4667

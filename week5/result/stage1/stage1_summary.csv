@@ -1,0 +1,5 @@
+Model,ARI_mean,NMI_mean,Silhouette score_mean,Training time (s)_mean
+Raw,0.6994,0.7800,0.1764,0.1808
+PCA,0.6975,0.7755,0.2206,0.1282
+AE,0.6750,0.7623,0.2187,1.2928
+VAE,0.7195,0.7909,0.1686,1.5129

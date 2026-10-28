@@ -1,0 +1,31 @@
+Method,Partition,Latent Dim.,Privacy Setting,Evaluation,Communication Rounds,Seed,ARI,NMI,Silhouette
+Raw + K-means,Centralized,64,None,Global test set,0,47,0.7031,0.7826,0.1763
+PCA + K-means,Centralized,16,None,Global test set,0,47,0.6969,0.7747,0.2206
+AE + K-means,Centralized,16,None,Global test set,0,47,0.6644,0.7588,0.2226
+VAE + K-means,Centralized,16,None,Global test set,0,47,0.7195,0.7932,0.1713
+Raw + K-means,Centralized,64,None,Global test set,0,48,0.6976,0.7787,0.1764
+PCA + K-means,Centralized,16,None,Global test set,0,48,0.6969,0.7747,0.2206
+AE + K-means,Centralized,16,None,Global test set,0,48,0.6746,0.7527,0.2164
+VAE + K-means,Centralized,16,None,Global test set,0,48,0.7370,0.7988,0.1681
+Raw + K-means,Centralized,64,None,Global test set,0,49,0.6976,0.7787,0.1764
+PCA + K-means,Centralized,16,None,Global test set,0,49,0.6987,0.7773,0.2207
+AE + K-means,Centralized,16,None,Global test set,0,49,0.6861,0.7754,0.2171
+VAE + K-means,Centralized,16,None,Global test set,0,49,0.7019,0.7807,0.1662
+Federated AE + K-means,IID,16,None,Global test set,200,47,0.6832,0.7690,0.2470
+Federated AE + K-means,IID,16,None,Global test set,200,48,0.6823,0.7694,0.2434
+Federated AE + K-means,IID,16,None,Global test set,200,49,0.7100,0.7796,0.2425
+Federated VAE + K-means,IID,16,None,Global test set,200,47,0.7062,0.7868,0.2237
+Federated VAE + K-means,IID,16,None,Global test set,200,48,0.7291,0.7982,0.2118
+Federated VAE + K-means,IID,16,None,Global test set,200,49,0.7034,0.7705,0.2153
+Local AE + K-means,Non-IID,16,None,Client-weighted test metrics,0,47,0.2118,0.4697,0.1731
+Local AE + K-means,Non-IID,16,None,Client-weighted test metrics,0,48,0.2185,0.4652,0.1758
+Local AE + K-means,Non-IID,16,None,Client-weighted test metrics,0,49,0.2213,0.4650,0.1764
+Federated AE + K-means,Non-IID,16,None,Global test set,200,47,0.5981,0.7134,0.2362
+Federated AE + K-means,Non-IID,16,None,Global test set,200,48,0.5242,0.6629,0.2103
+Federated AE + K-means,Non-IID,16,None,Global test set,200,49,0.6974,0.7804,0.2245
+Federated VAE + K-means,Non-IID,16,None,Global test set,200,47,0.6630,0.7467,0.2311
+Federated VAE + K-means,Non-IID,16,None,Global test set,200,48,0.6859,0.7680,0.2249
+Federated VAE + K-means,Non-IID,16,None,Global test set,200,49,0.6966,0.7757,0.2211
+Federated AE + clipping/noise,Non-IID,16,"C=0.3000, noise sigma=0.0050 (simulation)",Global test set,200,47,0.6383,0.7536,0.2317
+Federated AE + clipping/noise,Non-IID,16,"C=0.3000, noise sigma=0.0050 (simulation)",Global test set,200,48,0.6641,0.7517,0.2018
+Federated AE + clipping/noise,Non-IID,16,"C=0.3000, noise sigma=0.0050 (simulation)",Global test set,200,49,0.6493,0.7398,0.2204

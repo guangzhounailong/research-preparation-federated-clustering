@@ -1,0 +1,7 @@
+Partition,Seed,Weighted_ARI,Weighted_NMI,Weighted_Silhouette
+iid,47,0.6223,0.7870,0.2090
+iid,48,0.5961,0.7706,0.2232
+iid,49,0.6660,0.8012,0.2314
+noniid,47,0.2118,0.4697,0.1731
+noniid,48,0.2185,0.4652,0.1758
+noniid,49,0.2213,0.4650,0.1764

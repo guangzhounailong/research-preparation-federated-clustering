@@ -4,7 +4,7 @@ import torch
 from torch.utils.data import DataLoader, TensorDataset
 
 from .config import DEFAULT_CONFIG
-from .models import VAE
+from .models import Autoencoder, VAE
 
 
 def train_model(model, X_train, seed, epochs=None, *, config=DEFAULT_CONFIG):
@@ -50,4 +50,7 @@ def extract_features(model, X):
     model.eval()
     with torch.no_grad():
         features = model.encode(torch.from_numpy(X))
+        # 仅对 AE 的聚类表示按样本做 L2 归一化，不改变重建训练。
+        if isinstance(model, Autoencoder):
+            features = torch.nn.functional.normalize(features, p=2, dim=1)
     return features.numpy()

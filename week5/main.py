@@ -2,7 +2,6 @@
 
 import argparse
 from dataclasses import replace
-from datetime import datetime, timezone
 from importlib import import_module
 import math
 from pathlib import Path
@@ -47,7 +46,7 @@ def parse_args(argv=None):
     parser.add_argument("--stage", nargs="+", default=["all"],
                         help="all 或阶段编号，例如 --stage 1 3 4")
     parser.add_argument("--output-dir", type=Path,
-                        help="同目录可接着运行其他阶段；默认创建 UTC 时间命名的新目录")
+                        help="结果根目录，默认 week5/result；各阶段分别保存到 stage1–stage9")
     options = [
         ("--epochs", "epochs", int, "集中式与 Local-only AE/VAE 训练次数"),
         ("--rounds", "communication_rounds", int, "联邦通信轮数"),
@@ -104,8 +103,7 @@ def parse_args(argv=None):
         parser.error("随机种子必须位于 [0, 2**32) 内。")
     output_dir = args.output_dir
     if output_dir is None:
-        run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S_%fZ")
-        output_dir = Path(__file__).resolve().parent / "result" / run_id
+        output_dir = Path(__file__).resolve().parent / "result"
     return config, output_dir.resolve(), stage_order(requested)
 
 
@@ -114,31 +112,17 @@ def main(argv=None):
     # 命令行运行保存图片，不打开窗口；保持原入口的单线程训练设置。
     import matplotlib
     import torch
-    from .artifacts import prepare_run, record_stage, stage_complete
 
     matplotlib.use("Agg")
     torch.set_num_threads(1)
-    try:
-        manifest = prepare_run(output_dir, config)
-        completed = {stage: stage_complete(output_dir, manifest, stage) for stage in order}
-    except ValueError as error:
-        raise SystemExit(str(error)) from error
+    output_dir.mkdir(parents=True, exist_ok=True)
     print(f"Output: {output_dir}\nStages (including dependencies): {order}", flush=True)
     for stage in order:
-        if completed[stage]:
-            print(f"Stage {stage}: reuse completed results", flush=True)
-            continue
         print(f"Stage {stage}: start", flush=True)
-        record_stage(output_dir, manifest, stage, "running")
-        try:
-            stage_dir = output_dir / f"stage{stage}"
-            stage_dir.mkdir(exist_ok=True)
-            module = import_module(f".experiments.stage{stage}_{STAGES[stage]}", package="week5")
-            getattr(module, f"run_stage{stage}")(config, stage_dir)
-        except BaseException as error:
-            record_stage(output_dir, manifest, stage, "failed", error)
-            raise
-        record_stage(output_dir, manifest, stage, "complete")
+        stage_dir = output_dir / f"stage{stage}"
+        stage_dir.mkdir(exist_ok=True)
+        module = import_module(f".experiments.stage{stage}_{STAGES[stage]}", package="week5")
+        getattr(module, f"run_stage{stage}")(config, stage_dir)
         print(f"Stage {stage}: complete", flush=True)
     print(f"Finished: {output_dir}", flush=True)
 

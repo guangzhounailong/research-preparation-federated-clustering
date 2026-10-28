@@ -1,0 +1,5 @@
+Partition,Model,Reconstruction_loss_mean,KL_loss_mean,ARI_mean,NMI_mean,Silhouette_mean,Training_time_seconds_mean
+iid,AE,0.6804,0.0000,0.6918,0.7727,0.2443,1.4691
+iid,VAE,0.7307,28.7170,0.7129,0.7852,0.2170,1.8743
+noniid,AE,1.1921,0.0000,0.6066,0.7189,0.2237,1.4497
+noniid,VAE,1.0488,30.3132,0.6818,0.7635,0.2257,1.8763

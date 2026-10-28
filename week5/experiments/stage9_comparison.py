@@ -48,10 +48,12 @@ def run_stage9(config, output_dir):
                     **{metric: row[f"Weighted_{metric}"] for metric in metrics},
                 })
 
-        settings = [("Federated AE + K-means", federated, "None")]
+        settings = [
+            ("Federated AE + K-means", federated, "None"),
+            ("Federated VAE + K-means", vae[vae["Model"] == "VAE"], "None"),
+        ]
         if mode == "noniid":
             settings.extend([
-                ("Federated VAE + K-means", vae[vae["Model"] == "VAE"], "None"),
                 (
                     "Federated AE + clipping/noise",
                     privacy[privacy["Setting"] == "Full method"],

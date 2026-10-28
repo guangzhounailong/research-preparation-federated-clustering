@@ -73,6 +73,23 @@ class TrainingTests(unittest.TestCase):
         expected, _ = model.distribution(torch.from_numpy(data))
         np.testing.assert_array_equal(extract_features(model, data), expected.detach().numpy())
 
+    def test_ae_features_are_l2_normalized_with_zero_vectors_preserved(self):
+        config = replace(DEFAULT_CONFIG, input_dim=2, hidden_dim=2, latent_dim=2)
+        model = Autoencoder(config=config)
+        with torch.no_grad():
+            model.encoder[0].weight.copy_(torch.eye(2))
+            model.encoder[0].bias.zero_()
+            model.encoder[2].weight.copy_(torch.diag(torch.tensor([3.0, 4.0])))
+            model.encoder[2].bias.zero_()
+        data = np.array([[1.0, 1.0], [0.0, 0.0]], dtype=np.float32)
+        features = extract_features(model, data)
+        np.testing.assert_allclose(features, [[0.6, 0.8], [0.0, 0.0]], atol=1e-7)
+        # 编码器本身仍输出原始特征，训练和重建不会使用归一化后的表示。
+        np.testing.assert_array_equal(
+            model.encode(torch.from_numpy(data)).detach().numpy(),
+            [[3.0, 4.0], [0.0, 0.0]],
+        )
+
 
 class EntryPointTests(unittest.TestCase):
     def test_overrides_do_not_mutate_defaults(self):

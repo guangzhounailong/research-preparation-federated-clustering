@@ -15,7 +15,7 @@ class ExperimentConfig:
     # AE / VAE
     hidden_dim: int = 128
     latent_dim: int = 16
-    epochs: int = 50
+    epochs: int = 200
     batch_size: int = 64
     learning_rate: float = 1e-3
     beta: float = 0.01
@@ -23,7 +23,7 @@ class ExperimentConfig:
     # PCA / K-means
     pca_dim: int = 16
     num_clusters: int = 10
-    kmeans_n_init: int = 10
+    kmeans_n_init: int = 100
 
     # Client partition
     num_clients: int = 5
