@@ -1,7 +1,57 @@
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+from matplotlib.colors import BoundaryNorm
 import numpy as np
+from sklearn.decomposition import PCA
+
+
+def plot_representations(representations, y_test, seed, save_path=None):
+    """分别拟合二维 PCA；测试标签仅用于着色，不参与降维。"""
+    classes, color_ids = np.unique(y_test, return_inverse=True)
+    cmap = plt.get_cmap("tab10", len(classes))
+    norm = BoundaryNorm(np.arange(len(classes) + 1) - 0.5, cmap.N)
+    fig, axes = plt.subplots(
+        2, 3, figsize=(16, 9), constrained_layout=True,
+    )
+
+    for ax, (title, (Z_train, Z_test)) in zip(axes.flat, representations.items()):
+        # 每组使用相同的 PCA 设置，仅在训练特征上拟合。
+        pca = PCA(n_components=2, svd_solver="full")
+        pca.fit(Z_train)
+        coordinates = pca.transform(Z_test)
+        points = ax.scatter(
+            coordinates[:, 0], coordinates[:, 1],
+            c=color_ids, cmap=cmap, norm=norm,
+            s=16, alpha=0.7, linewidths=0,
+        )
+        variance = pca.explained_variance_ratio_ * 100
+        ax.set_title(title, fontsize=11)
+        ax.set_xlabel(f"PC1 ({variance[0]:.1f}% variance)")
+        ax.set_ylabel(f"PC2 ({variance[1]:.1f}% variance)")
+        ax.grid(alpha=0.2)
+
+    for ax in axes.flat[len(representations):]:
+        ax.set_visible(False)
+
+    fig.colorbar(
+        points, ax=list(axes.flat[:len(representations)]),
+        ticks=np.arange(len(classes)), label="Reference digit label",
+        shrink=0.8,
+    ).set_ticklabels(classes)
+    fig.suptitle(
+        f"2D PCA of representations | seed={seed} | same {len(y_test)} test samples\n"
+        "PCA fitted on training features separately; axes are not aligned.\n"
+        "Clipping + noise is a privacy-mechanism simulation (no formal DP guarantee).",
+        fontsize=13,
+    )
+
+    if save_path is not None:
+        save_path = Path(save_path)
+        save_path.parent.mkdir(parents=True, exist_ok=True)
+        fig.savefig(save_path, dpi=200, bbox_inches="tight")
+
+    return fig
 
 
 def count_client_classes(y, client_indices, classes):

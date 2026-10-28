@@ -1373,23 +1373,43 @@ Then discuss:
 
 Which representation gives the best clustering results?
 
+centralized vae
+
 How large is the gap between centralized and federated learning?
+
+0.6777-0.6549
 
 How does non-IID data affect convergence and clustering quality?
 
+Non-IID 下每个客户端只有两类数字，本地更新更偏向自身数据，聚合时更难形成适合所有类别的表示。
+
 Does federated training outperform local-only training?
+
+Yes
 
 How do AE and VAE representations differ?
 
+AE 主要学习有利于重建输入的编码；VAE 还加入 KL 约束，使学到的潜在分布接近指定先验。
+
 How does clipping affect optimization?
+
+裁剪限制单个客户端更新的长度，防止某次更新对全局模型产生过大的影响；同时也可能缩小有用的更新，影响学习进展。
 
 How does added noise affect clustering quality?
 
+影响不是单调的，在之前的实验中，IID数据下噪声倍数从 0 增加到 0.10，ARI 从 0.6263 降至  0.4681 ，表明较强噪声会破坏表示学习。Non-IID数据下ARI 从无噪声的 0.3400 上升到噪声倍数 0.05 时的  0.5057 ，再在 0.10 时下降到  0.4059 。这说明部分噪声设置可能改善当前优化结果，但原因还需要进一步实验验证。
+
 What privacy claim can your experiment support, and what can it not support?
+
+代码实现了 客户端更新裁剪和聚合后高斯噪声的机制模拟 ，并观察了这些操作对聚类效用的影响。目前不能声称实现了正式差分隐私、给出有效的 ε，或证明模型能够抵抗隐私攻击。
 
 Why does federated learning still require an explicit threat model?
 
+因为“原始数据留在客户端”只说明数据的存放位置，没有说明 谁能看到什么，以及谁可能利用这些信息 。
+
 What would you try next if you had another month?
+
+使用正式的差分隐私库，明确隐私保护对象，并引入有效的隐私会计来计算隐私预算。然后重新运行之前的实验，比较不同隐私预算下的聚类表现
 
 ---
 

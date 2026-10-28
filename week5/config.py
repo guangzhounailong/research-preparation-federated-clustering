@@ -23,7 +23,7 @@ NUM_CLIENTS = 5
 PARTITION_SEED = 47
 
 # Federated training
-COMMUNICATION_ROUNDS = 50
+COMMUNICATION_ROUNDS = 200
 LOCAL_EPOCHS = 1
 
 # Privacy mechanism simulation

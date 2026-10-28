@@ -18,6 +18,7 @@ from visualization import (
     plot_client_distributions,
     plot_federated_curves,
     plot_generated_samples,
+    plot_representations,
 )
 
 from client import run_local_only
@@ -696,9 +697,224 @@ def run_stage7():
 
     return history_df, comparison_df
 
+def run_stage8():
+    X_train, X_test, y_train, y_test = load_data(
+        split_seed=config.SPLIT_SEED
+    )
+    # 预先固定种子和完整测试集，不根据标签或图形效果挑选样本。
+    seed = config.SEEDS[0]
+    # 与 Stage 7 的 Full method 一致，直接固定噪声标准差。
+    ablation_clip_norm = 0.3
+    noise_std = 0.005
+    representations = {"Raw features": (X_train, X_test)}
+
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    centralized_model = Autoencoder(latent_dim=config.LATENT_DIM)
+    train_model(centralized_model, X_train, seed)
+    representations["Centralized AE"] = (
+        extract_features(centralized_model, X_train),
+        extract_features(centralized_model, X_test),
+    )
+
+    for mode in ["iid", "noniid"]:
+        # 训练标签仅用于构造客户端划分，不参与表示学习或聚类拟合。
+        train_indices = partition_data(
+            y_train,
+            num_clients=config.NUM_CLIENTS,
+            mode=mode,
+            seed=config.PARTITION_SEED,
+        )
+        settings = [(None, None)]
+        if mode == "noniid":
+            settings.append((ablation_clip_norm, noise_std))
+
+        for clip_norm, setting_noise_std in settings:
+            # y_test 在已有训练函数中仅计算评价指标，不影响更新或模型选择。
+            global_model, _ = run_federated_training(
+                X_train=X_train,
+                X_test=X_test,
+                y_test=y_test,
+                train_indices=train_indices,
+                seed=seed,
+                model_class=Autoencoder,
+                clip_norm=clip_norm,
+                noise_std=setting_noise_std,
+            )
+            partition_label = "IID" if mode == "iid" else "non-IID"
+            title = (
+                f"Federated AE ({partition_label}, "
+                f"{config.COMMUNICATION_ROUNDS} rounds)"
+            )
+            if clip_norm is not None:
+                title += (
+                    f"\nClipping C={clip_norm}, noise std={setting_noise_std}"
+                )
+            representations[title] = (
+                extract_features(global_model, X_train),
+                extract_features(global_model, X_test),
+            )
+
+    save_path = (
+        Path(__file__).resolve().parent
+        / "result"
+        / "stage8_representations.png"
+    )
+    fig = plot_representations(
+        representations,
+        y_test,
+        seed=seed,
+        save_path=save_path,
+    )
+    plt.close(fig)
+    print(f"Stage 8's result: week5/result/{save_path.name}")
+    return fig
+
+
+def run_stage9():
+    X_train, X_test, y_train, y_test = load_data(
+        split_seed=config.SPLIT_SEED
+    )
+    results = []
+
+    for seed in config.SEEDS:
+        for method in ["Raw", "PCA", "AE", "VAE"]:
+            np.random.seed(seed)
+            torch.manual_seed(seed)
+
+            if method == "Raw":
+                Z_train, Z_test = X_train, X_test
+                latent_dim = X_train.shape[1]
+            elif method == "PCA":
+                pca = PCA(n_components=config.PCA_DIM, svd_solver="full")
+                Z_train = pca.fit_transform(X_train)
+                Z_test = pca.transform(X_test)
+                latent_dim = config.PCA_DIM
+            else:
+                model_class = Autoencoder if method == "AE" else VAE
+                model = model_class(latent_dim=config.LATENT_DIM)
+                train_model(model, X_train, seed)
+                Z_train = extract_features(model, X_train)
+                Z_test = extract_features(model, X_test)
+                latent_dim = config.LATENT_DIM
+
+            y_pred, _ = run_kmeans(Z_train, Z_test, seed)
+            metrics = evaluate_clustering(
+                Z_test, y_test, y_pred, training_time=0.0,
+            )
+            results.append({
+                "Method": f"{method} + K-means",
+                "Partition": "Centralized",
+                "Latent Dim.": latent_dim,
+                "Privacy Setting": "None",
+                "Communication Rounds": 0,
+                "Seed": seed,
+                **{metric: metrics[metric] for metric in ["ARI", "NMI", "Silhouette"]},
+            })
+
+    for mode in ["iid", "noniid"]:
+        train_indices = partition_data(
+            y_train,
+            num_clients=config.NUM_CLIENTS,
+            mode=mode,
+            seed=config.PARTITION_SEED,
+        )
+        test_indices = partition_data(
+            y_test,
+            num_clients=config.NUM_CLIENTS,
+            mode=mode,
+            seed=config.PARTITION_SEED,
+        )
+        partition_label = "IID" if mode == "iid" else "Non-IID"
+
+        if mode == "noniid":
+            for seed in config.SEEDS:
+                local_df = pd.DataFrame(run_local_only(
+                    X_train=X_train,
+                    X_test=X_test,
+                    y_test=y_test,
+                    train_indices=train_indices,
+                    test_indices=test_indices,
+                    seed=seed,
+                ))
+                # 独立的本地潜在空间分别评价，再按测试样本数加权。
+                results.append({
+                    "Method": "Local AE + K-means",
+                    "Partition": partition_label,
+                    "Latent Dim.": config.LATENT_DIM,
+                    "Privacy Setting": "None",
+                    "Communication Rounds": 0,
+                    "Seed": seed,
+                    **{
+                        metric: np.average(local_df[metric], weights=local_df["N_test"])
+                        for metric in ["ARI", "NMI", "Silhouette"]
+                    },
+                })
+
+        settings = [("Federated AE + K-means", Autoencoder, None, None)]
+        if mode == "noniid":
+            settings.extend([
+                ("Federated VAE + K-means", VAE, None, None),
+                # 沿用 Stage 7 / 8 的 Full method 设置。
+                ("Federated AE + clipping/noise", Autoencoder, 0.3, 0.005),
+            ])
+
+        for method, model_class, clip_norm, noise_std in settings:
+            for seed in config.SEEDS:
+                _, history = run_federated_training(
+                    X_train=X_train,
+                    X_test=X_test,
+                    y_test=y_test,
+                    train_indices=train_indices,
+                    seed=seed,
+                    model_class=model_class,
+                    clip_norm=clip_norm,
+                    noise_std=noise_std,
+                )
+                # 联邦方法使用完整测试集指标，与 Stage 4 / 5 的口径一致。
+                results.append({
+                    "Method": method,
+                    "Partition": partition_label,
+                    "Latent Dim.": config.LATENT_DIM,
+                    "Privacy Setting": (
+                        "None" if clip_norm is None
+                        else f"C={clip_norm}, noise std={noise_std} (simulation)"
+                    ),
+                    "Communication Rounds": history[-1]["Round"],
+                    "Seed": seed,
+                    **{
+                        metric: history[-1][metric]
+                        for metric in ["ARI", "NMI", "Silhouette"]
+                    },
+                })
+
+    results_df = pd.DataFrame(results)
+    setting_columns = [
+        "Method", "Partition", "Latent Dim.", "Privacy Setting",
+        "Communication Rounds",
+    ]
+    comparison_rows = []
+    for setting, group in results_df.groupby(setting_columns, sort=False):
+        row = dict(zip(setting_columns, setting))
+        for metric in ["ARI", "NMI", "Silhouette"]:
+            # 标准差反映不同种子的波动，不是置信区间。
+            row[metric] = f"{group[metric].mean():.4f} ± {group[metric].std():.4f}"
+        comparison_rows.append(row)
+
+    comparison_df = pd.DataFrame(comparison_rows)[[
+        "Method", "Partition", "Latent Dim.", "Privacy Setting",
+        "ARI", "NMI", "Silhouette", "Communication Rounds",
+    ]]
+    output_dir = Path(__file__).resolve().parent / "result"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    comparison_df.to_csv(output_dir / "stage9_comparison.csv", index=False)
+    print("Stage 9's result: week5/result/stage9_comparison.csv")
+    return results_df, comparison_df
+
+
 def main():
     torch.set_num_threads(1)
-    run_stage7()
+    run_stage9()
 
 
 if __name__ == "__main__":
