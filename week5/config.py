@@ -1,31 +1,45 @@
-DATASET = "digits"
-INPUT_DIM = 64
-PIXEL_MAX = 16.0
-TEST_SIZE = 0.2
-SPLIT_SEED = 47
-SEEDS = [47, 48, 49]
+"""集中保存实验默认值；每次运行使用独立、不可变的配置。"""
 
-# AE / VAE
-HIDDEN_DIM = 128
-LATENT_DIM = 16
-EPOCHS = 50
-BATCH_SIZE = 64
-LEARNING_RATE = 1e-3
-BETA = 0.01
+from dataclasses import dataclass
 
-# PCA / K-means
-PCA_DIM = 16
-NUM_CLUSTERS = 10
-KMEANS_N_INIT = 10
 
-# Client partition
-NUM_CLIENTS = 5
-PARTITION_SEED = 47
+@dataclass(frozen=True)
+class ExperimentConfig:
+    dataset: str = "digits"
+    input_dim: int = 64
+    pixel_max: float = 16.0
+    test_size: float = 0.2
+    split_seed: int = 47
+    seeds: tuple[int, ...] = (47, 48, 49)
 
-# Federated training
-COMMUNICATION_ROUNDS = 200
-LOCAL_EPOCHS = 1
+    # AE / VAE
+    hidden_dim: int = 128
+    latent_dim: int = 16
+    epochs: int = 50
+    batch_size: int = 64
+    learning_rate: float = 1e-3
+    beta: float = 0.01
 
-# Privacy mechanism simulation
-CLIP_NORM = 0.5
-NOISE_MULTIPLIERS = [0.00, 0.01, 0.05, 0.10]
+    # PCA / K-means
+    pca_dim: int = 16
+    num_clusters: int = 10
+    kmeans_n_init: int = 10
+
+    # Client partition
+    num_clients: int = 5
+    partition_seed: int = 47
+
+    # Federated training
+    communication_rounds: int = 200
+    local_epochs: int = 1
+
+    # Stage 6: noise std = multiplier × clipping norm
+    clip_norm: float = 0.5
+    noise_multipliers: tuple[float, ...] = (0.00, 0.01, 0.05, 0.10)
+
+    # Stage 7–9: fixed noise std, independent of clipping
+    ablation_clip_norm: float = 0.3
+    ablation_noise_std: float = 0.005
+
+
+DEFAULT_CONFIG = ExperimentConfig()

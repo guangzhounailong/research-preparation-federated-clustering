@@ -1,14 +1,15 @@
+from copy import deepcopy
 from time import perf_counter
 
 import numpy as np
 import torch
 
-from evaluation import evaluate_clustering, run_kmeans
-from models import Autoencoder, extract_features, train_model
+from .clustering import run_kmeans
+from .config import DEFAULT_CONFIG
+from .evaluation import evaluate_clustering
+from .models import Autoencoder
+from .training import extract_features, train_model
 
-from copy import deepcopy
-
-import config
 
 def run_local_only(
     X_train,
@@ -17,6 +18,8 @@ def run_local_only(
     train_indices,
     test_indices,
     seed,
+    *,
+    config=DEFAULT_CONFIG,
 ):
     results = []
 
@@ -31,11 +34,11 @@ def run_local_only(
         # 每个客户端创建独立模型，使用相同初始化控制实验条件
         np.random.seed(seed)
         torch.manual_seed(seed)
-        model = Autoencoder()
+        model = Autoencoder(config=config)
 
         # 只在本地训练数据上训练 AE
         start = perf_counter()
-        train_model(model, X_local_train, seed)
+        train_model(model, X_local_train, seed, config=config)
         ae_training_time = perf_counter() - start
 
         # 使用当前客户端的编码器提取特征
@@ -47,6 +50,7 @@ def run_local_only(
             Z_train,
             Z_test,
             seed,
+            config=config,
         )
 
         metrics = evaluate_clustering(
@@ -66,14 +70,15 @@ def run_local_only(
 
     return results
 
-def train_client(global_model, X_local_train, seed):
+def train_client(global_model, X_local_train, seed, *, config=DEFAULT_CONFIG):
     local_model = deepcopy(global_model)
 
     train_model(
         local_model,
         X_local_train,
         seed,
-        epochs=config.LOCAL_EPOCHS,
+        epochs=config.local_epochs,
+        config=config,
     )
 
     return local_model.state_dict(), len(X_local_train)

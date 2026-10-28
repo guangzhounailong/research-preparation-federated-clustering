@@ -1,24 +1,27 @@
+"""AE / VAE 网络定义；VAE 使用后验均值作为聚类表示。"""
+
 import torch
 from torch import nn
-from torch.utils.data import DataLoader, TensorDataset
 
-import config
+from .config import DEFAULT_CONFIG
 
 
 class Autoencoder(nn.Module):
-    def __init__(self, latent_dim=config.LATENT_DIM):
+    def __init__(self, latent_dim=None, *, config=DEFAULT_CONFIG):
+        if latent_dim is None:
+            latent_dim = config.latent_dim
         super().__init__()
 
         self.encoder = nn.Sequential(
-            nn.Linear(config.INPUT_DIM, config.HIDDEN_DIM),
+            nn.Linear(config.input_dim, config.hidden_dim),
             nn.ReLU(),
-            nn.Linear(config.HIDDEN_DIM, latent_dim),
+            nn.Linear(config.hidden_dim, latent_dim),
         )
 
         self.decoder = nn.Sequential(
-            nn.Linear(latent_dim, config.HIDDEN_DIM),
+            nn.Linear(latent_dim, config.hidden_dim),
             nn.ReLU(),
-            nn.Linear(config.HIDDEN_DIM, config.INPUT_DIM),
+            nn.Linear(config.hidden_dim, config.input_dim),
             nn.Sigmoid(),
         )
 
@@ -31,21 +34,23 @@ class Autoencoder(nn.Module):
 
 
 class VAE(nn.Module):
-    def __init__(self, latent_dim=config.LATENT_DIM):
+    def __init__(self, latent_dim=None, *, config=DEFAULT_CONFIG):
+        if latent_dim is None:
+            latent_dim = config.latent_dim
         super().__init__()
 
         self.encoder = nn.Sequential(
-            nn.Linear(config.INPUT_DIM, config.HIDDEN_DIM),
+            nn.Linear(config.input_dim, config.hidden_dim),
             nn.ReLU(),
         )
 
-        self.fc_mu = nn.Linear(config.HIDDEN_DIM, latent_dim)
-        self.fc_logvar = nn.Linear(config.HIDDEN_DIM, latent_dim)
+        self.fc_mu = nn.Linear(config.hidden_dim, latent_dim)
+        self.fc_logvar = nn.Linear(config.hidden_dim, latent_dim)
 
         self.decoder = nn.Sequential(
-            nn.Linear(latent_dim, config.HIDDEN_DIM),
+            nn.Linear(latent_dim, config.hidden_dim),
             nn.ReLU(),
-            nn.Linear(config.HIDDEN_DIM, config.INPUT_DIM),
+            nn.Linear(config.hidden_dim, config.input_dim),
             nn.Sigmoid(),
         )
 
@@ -67,49 +72,3 @@ class VAE(nn.Module):
 
         reconstructed = self.decoder(z)
         return reconstructed, mu, logvar
-
-
-def train_model(model, X_train, seed, epochs=None):
-    if epochs is None:
-        epochs = config.EPOCHS
-    
-    generator = torch.Generator().manual_seed(seed)
-    loader = DataLoader(
-        TensorDataset(torch.from_numpy(X_train)),
-        batch_size=config.BATCH_SIZE,
-        shuffle=True,
-        generator=generator,
-    )
-    optimizer = torch.optim.Adam(
-        model.parameters(), lr=config.LEARNING_RATE
-    )
-
-    for _ in range(epochs):
-        model.train()
-        for (x,) in loader:
-            optimizer.zero_grad()
-
-            if isinstance(model, VAE):
-                reconstructed, mu, logvar = model(x)
-                kl_loss = -0.5 * (
-                    1 + logvar - mu.square() - logvar.exp()
-                ).sum(dim=1).mean()
-            else:
-                reconstructed = model(x)
-                kl_loss = x.new_tensor(0.0)
-
-            reconstruction_loss = (
-                (reconstructed - x).square().sum(dim=1).mean()
-            )
-            loss = reconstruction_loss + config.BETA * kl_loss
-            loss.backward()
-            optimizer.step()
-
-    return model
-
-
-def extract_features(model, X):
-    model.eval()
-    with torch.no_grad():
-        features = model.encode(torch.from_numpy(X))
-    return features.numpy()

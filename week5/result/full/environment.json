@@ -1,0 +1,40 @@
+{
+  "python": "3.14.6",
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "packages": {
+    "numpy": "2.5.3",
+    "pandas": "3.0.6",
+    "scikit-learn": "1.9.1",
+    "torch": "2.14.0",
+    "matplotlib": "3.11.2"
+  },
+  "torch_threads": 1,
+  "source_sha256": {
+    "__init__.py": "4907152eb889a91e7f5b109ba616f3189e787f6e8d408c3cee8ec49942a65553",
+    "artifacts.py": "600f8b6caf8a313430d93b6f0b713fc5544931e989561f03f2f0b95c2205ae1f",
+    "client.py": "df4fecd7c706eb3c6ce9a30b69650b0ab4abd710fd3a76d35db8ed71ab2e7ef8",
+    "clustering.py": "72fd5950aad01f6859e83fffa6a218ea82ae2acbc6e69c9e8369281786a13bd6",
+    "config.py": "72b9b88f83614a7762e137cb84d057e9331b6315cc6fba8530aa47e62dbb38fa",
+    "data.py": "14364a0c764077945eabcaf41c81f79f234c465c0ef44156463cf359c5170ec3",
+    "evaluation.py": "0af9e4daf25bfe1c66d2a58501b979b84e929be3ed59ddb5ce9cf47415888267",
+    "experiments/__init__.py": "bfceeaeac37b0fdb237f0829becad3a5355c800795b834325a7e7e500475716c",
+    "experiments/common.py": "7a46d7014995932145b1bf1cde093eb6b6d1b341023961c0c9bb4243172db578",
+    "experiments/stage1_centralized.py": "eb1f12369b2723be27d54e6d6f4fd2ce3aa9bc7c30436869b5ab74546cb2429d",
+    "experiments/stage2_partition.py": "5d98ca2b8dc87556c1604a3a4e0dde099892635c0508f1f460a07a6441517a01",
+    "experiments/stage3_local_only.py": "079cd9d8926e476a2a03e2a19f570a718b3a611b9c37febed56f92ddc03f88df",
+    "experiments/stage4_federated_ae.py": "4c1d7934a656e9b1e86bdeb682d5d93d3cc27e90bf1f8407b890f63680f08ed8",
+    "experiments/stage5_federated_vae.py": "c378c5adeaab956f5dfa6484bfbd122bcf87f7e337c6478abf5e92ce2e5ff0a5",
+    "experiments/stage6_privacy.py": "4005def1755ca9a365a97ff504733affba1663f3d22fc999d045452559d6056a",
+    "experiments/stage7_ablation.py": "304b7b64f2e1fbb1f9db82bbf8834fcc84a8099e34be3add99599149908fea8c",
+    "experiments/stage8_visualization.py": "fed9b344bf94ed8846cc63444ab87d3f62ffc56916e7f7952f12992ba7ab2e02",
+    "experiments/stage9_comparison.py": "d7c3c25e99bb51f9083d0ef82098aabce64dcc0d67bdae8537a873bd00001099",
+    "federated_training.py": "dff308d51732001b322e4592d042df6406aa4deecd409c44ec98e0f20f6d913a",
+    "main.py": "4457572e2a43667be99607f631d141fa44aedc286b22de3170c7b1fb10244273",
+    "models.py": "11ecb5c3190cac2fcc0c78a08e471e4301fe722f4ae9741834379bd0cc9b264c",
+    "partition.py": "ca569ef9c517a13407a89208b0fe664c0840687d12f9d0d2e16afbfd5799c3bc",
+    "privacy.py": "7507fddfdb133f9ad221228146de217a4fa2cb4c8bac320656a5a39a236c4b14",
+    "server.py": "715d6fd7864ab2eab271aa1789cfea272221b5859327136b976a6ef3958e035c",
+    "training.py": "7a0810944aaf231d217ce08685151f75bf7af8e49eb634c83068800fd9dda2d5",
+    "visualization.py": "c1f6e156d6ca7fb6d1265b8351b4df6c1e196e4eba483adf844942cd3dd87822"
+  }
+}

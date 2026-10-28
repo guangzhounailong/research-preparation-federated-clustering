@@ -1,0 +1,10 @@
+Method,Partition,Latent Dim.,Privacy Setting,Evaluation,ARI,NMI,Silhouette,Communication Rounds
+Raw + K-means,Centralized,64,None,Global test set,0.6964,0.7779,0.1762,0
+PCA + K-means,Centralized,16,None,Global test set,0.6958,0.7743,0.2205,0
+AE + K-means,Centralized,16,None,Global test set,0.6549,0.7512,0.2312,0
+VAE + K-means,Centralized,16,None,Global test set,0.6997,0.7808,0.2073,0
+Federated AE + K-means,IID,16,None,Global test set,0.6777,0.7583,0.2361,200
+Local AE + K-means,Non-IID,16,None,Client-weighted test metrics,0.2104,0.4624,0.2045,0
+Federated AE + K-means,Non-IID,16,None,Global test set,0.5526,0.6497,0.1996,200
+Federated VAE + K-means,Non-IID,16,None,Global test set,0.6794,0.7643,0.2253,200
+Federated AE + clipping/noise,Non-IID,16,"C=0.3000, noise sigma=0.0050 (simulation)",Global test set,0.5810,0.6810,0.1986,200

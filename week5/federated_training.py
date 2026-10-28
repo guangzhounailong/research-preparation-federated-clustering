@@ -3,11 +3,13 @@ from time import perf_counter
 import numpy as np
 import torch
 
-import config
-from client import train_client
-from evaluation import evaluate_clustering, run_kmeans
-from models import Autoencoder, VAE, extract_features
-from server import fedavg,fedavg_with_noise
+from .config import DEFAULT_CONFIG
+from .client import train_client
+from .clustering import run_kmeans
+from .evaluation import evaluate_clustering
+from .models import Autoencoder, VAE
+from .training import extract_features
+from .server import fedavg, fedavg_with_noise
 
 
 def run_federated_training(
@@ -19,18 +21,20 @@ def run_federated_training(
     model_class = Autoencoder,
     clip_norm = None,
     noise_multiplier=0.0,
-    noise_std = None
+    noise_std=None,
+    *,
+    config=DEFAULT_CONFIG,
 ):
     #初始化全局模型
     np.random.seed(seed)
     torch.manual_seed(seed)
-    global_model = model_class()
+    global_model = model_class(config=config)
 
     history = []
     training_time = 0.0
     noise_generator = torch.Generator().manual_seed(seed + 1000)
 
-    for round_id in range(1, config.COMMUNICATION_ROUNDS + 1):
+    for round_id in range(1, config.communication_rounds + 1):
         client_states = []
         client_sizes = []
 
@@ -45,6 +49,7 @@ def run_federated_training(
                 global_model,
                 X_local_train,
                 local_seed,
+                config=config,
             )
 
             client_states.append(state)
@@ -72,12 +77,12 @@ def run_federated_training(
         global_model.load_state_dict(global_state)
         training_time += perf_counter() - start
 
-        #使用更新后的全局编码器提取特征 
+        #使用更新后的全局编码器提取特征
         Z_train = extract_features(global_model, X_train)
         Z_test = extract_features(global_model, X_test)
 
         #训练集拟合 K-means，测试集预测与评价
-        y_pred, _ = run_kmeans(Z_train, Z_test, seed)
+        y_pred, _ = run_kmeans(Z_train, Z_test, seed, config=config)
 
         metrics = evaluate_clustering(
             Z_test,
@@ -102,7 +107,7 @@ def run_federated_training(
             reconstruction_loss = (
                 (reconstructed - x_test).square().sum(dim=1).mean().item()
             )
-        
+
         history.append({
             "Seed": seed,
             "Round": round_id,

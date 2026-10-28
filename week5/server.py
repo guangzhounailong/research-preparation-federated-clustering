@@ -1,4 +1,9 @@
+"""按客户端数据量聚合模型参数或处理后的更新。"""
+
 import torch
+
+from .privacy import clip_client_update, sample_gaussian_noise
+
 
 def fedavg(client_states, client_sizes):
     #计算样本总数
@@ -14,35 +19,6 @@ def fedavg(client_states, client_sizes):
 
     return global_state
 
-def clip_client_update(local_state, global_state, clip_norm):
-    # 计算本轮本地训练带来的参数变化
-    update = {
-        name: local_state[name] - global_state[name]
-        for name in global_state
-    }
-
-    # 把所有层的更新合起来，计算一个总长度
-    norm_before = torch.sqrt(sum(
-        value.square().sum()
-        for value in update.values()
-    )).item()
-
-    if clip_norm is not None and norm_before > 0:
-        scale = min(1.0, clip_norm / norm_before)
-    else:
-        scale = 1.0
-
-    clipped_update = {
-        name: value * scale
-        for name, value in update.items()
-    }
-
-    norm_after = torch.sqrt(sum(
-        value.square().sum()
-        for value in clipped_update.values()
-    )).item()
-
-    return clipped_update, norm_before, norm_after
 
 def fedavg_with_noise(
     client_states,
@@ -81,12 +57,7 @@ def fedavg_with_noise(
     new_state = {}
 
     for name, update in averaged_update.items():
-        noise = torch.randn(
-            update.shape,
-            generator=noise_generator,
-            device=update.device,
-            dtype=update.dtype,
-        ) * noise_std
+        noise = sample_gaussian_noise(update, noise_std, noise_generator)
 
         new_state[name] = global_state[name] + update + noise
 
