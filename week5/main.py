@@ -549,7 +549,7 @@ def run_stage6():
             ],
             sort=False,
         )[metric_columns]
-        .agg(["mean", "std"])
+        .agg(["mean"])
     )
 
     comparison_df.columns = [
@@ -580,9 +580,125 @@ def run_stage6():
 
     return history_df, comparison_df
 
+def run_stage7():
+    X_train, X_test, y_train, y_test = load_data(
+        split_seed=config.SPLIT_SEED
+    )
+
+    train_indices = partition_data(
+        y_train,
+        num_clients=config.NUM_CLIENTS,
+        mode="noniid",
+        seed=config.PARTITION_SEED,
+    )
+
+    ablation_clip_norm = 0.3
+    # 固定实际噪声标准差，单独观察裁剪阈值变化的影响
+    noise_std = 0.005
+
+    settings = [
+        ("Full method", ablation_clip_norm, noise_std),
+        ("w/o clipping", None, noise_std),
+        ("w/o noise", ablation_clip_norm, 0.0),
+        ("w/o both", None, 0.0),
+    ]
+
+    history_results = []
+    final_results = []
+
+    for setting_name, clip_norm, setting_noise_std in settings:
+        for seed in config.SEEDS:
+            _, history = run_federated_training(
+                X_train=X_train,
+                X_test=X_test,
+                y_test=y_test,
+                train_indices=train_indices,
+                seed=seed,
+                model_class=Autoencoder,
+                clip_norm=clip_norm,
+                noise_std=setting_noise_std,
+            )
+            setting = {
+                "Setting": setting_name,
+                "Partition": "noniid",
+                "Model": "AE",
+                "Clip_norm": clip_norm,
+                "Noise_std": setting_noise_std,
+                "Local_epochs": config.LOCAL_EPOCHS,
+            }
+            for row in history:
+                history_results.append({
+                    **setting,
+                    **row,
+                })
+            final_results.append({
+                **setting,
+                **history[-1],
+            })
+
+    history_df = pd.DataFrame(history_results)
+    final_df = pd.DataFrame(final_results)
+
+    metric_columns = [
+        "Reconstruction_loss",
+        "ARI",
+        "NMI",
+        "Silhouette",
+        "Norm_before_mean",
+        "Norm_after_mean",
+        "Training_time_seconds",
+    ]
+
+    # 每组实验：汇总不同种子的最后一轮结果
+    comparison_df = (
+        final_df
+        .groupby(
+            [
+                "Setting",
+                "Partition",
+                "Model",
+                "Clip_norm",
+                "Noise_std",
+                "Local_epochs",
+                "Round",
+            ],
+            sort=False,
+            dropna=False,
+        )[metric_columns]
+        .agg(["mean"])
+    )
+
+    comparison_df.columns = [
+        f"{metric}_{stat}"
+        for metric, stat in comparison_df.columns
+    ]
+    comparison_df = comparison_df.reset_index()
+
+    output_dir = Path(__file__).resolve().parent / "result"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    history_df.to_csv(
+        output_dir / "stage7_history.csv",
+        index=False,
+        float_format="%.4f",
+    )
+
+    comparison_df.to_csv(
+        output_dir / "stage7_comparison.csv",
+        index=False,
+        float_format="%.4f",
+    )
+
+    print(
+        "Stage 7's result: week5/result/stage7_history.csv, "
+        "week5/result/stage7_comparison.csv"
+    )
+
+    return history_df, comparison_df
+
 def main():
     torch.set_num_threads(1)
-    run_stage6()
+    run_stage7()
 
 
 if __name__ == "__main__":

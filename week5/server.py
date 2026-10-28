@@ -27,7 +27,7 @@ def clip_client_update(local_state, global_state, clip_norm):
         for value in update.values()
     )).item()
 
-    if norm_before > 0:
+    if clip_norm is not None and norm_before > 0:
         scale = min(1.0, clip_norm / norm_before)
     else:
         scale = 1.0
@@ -51,6 +51,7 @@ def fedavg_with_noise(
     clip_norm,
     noise_multiplier,
     noise_generator,
+    noise_std = None
 ):
     clipped_updates = []
     norm_records = []
@@ -73,7 +74,8 @@ def fedavg_with_noise(
     averaged_update = fedavg(clipped_updates, client_sizes)
 
     # 3. 噪声标准差 = 噪声倍数 × 裁剪上限
-    noise_std =  noise_multiplier*clip_norm
+    if noise_std is None:
+        noise_std = noise_multiplier * clip_norm
 
     # 4. 旧参数 + 平均更新 + 噪声
     new_state = {}

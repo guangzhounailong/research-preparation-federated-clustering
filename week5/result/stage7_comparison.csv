@@ -1,0 +1,5 @@
+Setting,Partition,Model,Clip_norm,Noise_std,Local_epochs,Round,Reconstruction_loss_mean,ARI_mean,NMI_mean,Silhouette_mean,Norm_before_mean_mean,Norm_after_mean_mean,Training_time_seconds_mean
+Full method,noniid,AE,0.3000,0.0050,1,50,3.6453,0.2570,0.4276,0.2285,0.4689,0.3000,0.5177
+w/o clipping,noniid,AE,,0.0050,1,50,2.9509,0.3713,0.5254,0.2220,0.4199,0.4199,0.3709
+w/o noise,noniid,AE,0.3000,0.0000,1,50,3.6958,0.2563,0.4296,0.2419,0.4667,0.3000,0.3839
+w/o both,noniid,AE,,0.0000,1,50,2.9529,0.3433,0.5037,0.2330,0.4210,0.4210,0.3788

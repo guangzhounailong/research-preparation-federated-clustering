@@ -18,7 +18,8 @@ def run_federated_training(
     seed,
     model_class = Autoencoder,
     clip_norm = None,
-    noise_multiplier=0.0
+    noise_multiplier=0.0,
+    noise_std = None
 ):
     #初始化全局模型
     np.random.seed(seed)
@@ -52,7 +53,7 @@ def run_federated_training(
         #更新全局模型
         norm_metrics = {}
 
-        if clip_norm is None:
+        if clip_norm is None and noise_std is None:
             global_state = fedavg(client_states, client_sizes)
         else:
             global_state, norm_records = fedavg_with_noise(
@@ -62,6 +63,7 @@ def run_federated_training(
                 clip_norm=clip_norm,
                 noise_multiplier=noise_multiplier,
                 noise_generator=noise_generator,
+                noise_std=noise_std
             )
             norm_metrics = {
                 "Norm_before_mean": np.mean([row["Norm_before"] for row in norm_records]),
